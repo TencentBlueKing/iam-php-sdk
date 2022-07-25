@@ -45,22 +45,48 @@ function cmp_gte($v1, $v2): bool
 
 function cmp_starts_with($v1, $v2): bool
 {
-    return str_starts_with($v1, $v2);
+    if (is_null($v1)) {
+        return false;
+    }
+    return strpos($v1, $v2) === 0;
+    // only in php8
+    // return str_starts_with($v1, $v2);
 }
 
 function cmp_not_starts_with($v1, $v2): bool
 {
-    return !str_starts_with($v1, $v2);
+    if (is_null($v1)) {
+        return false;
+    }
+    return !(strpos($v1, $v2) === 0);
 }
 
 function cmp_ends_with($v1, $v2): bool
 {
-    return str_ends_with($v1, $v2);
+    if (is_null($v1)) {
+        return false;
+    }
+    $length = strlen($v2);
+    return $length > 0 ? substr($v1, -$length) === $v2: true;
+    // only in php8
+    // return str_ends_with($v1, $v2);
 }
 
 function cmp_not_ends_with($v1, $v2): bool
 {
-    return !str_ends_with($v1, $v2);
+    if (is_null($v1)) {
+        return false;
+    }
+    $length = strlen($v2);
+    return $length > 0 ? substr($v1, -$length) !== $v2: true;
+}
+
+function cmp_string_contains($v1, $v2): bool
+{
+    if (is_null($v1)) {
+        return false;
+    }
+    return strpos($v1, $v2) !== false;
 }
 
 function cmp_in($v1, $v2): bool

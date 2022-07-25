@@ -35,11 +35,12 @@ function eval_binary_operator(string $op, string $field, $policy_value, ObjectSe
         }
     }
 
+    // reference: https://github.com/TencentBlueKing/bk-iam-saas/issues/1293
     // do validate
     // 1. eq/not_eq/lt/lte/gt/gte the policy value should be a single value
-    // 2. important: starts_with/not_starts_with/ends_with/not_ends_with, the policy value should be a single value too!
+    // 2. important: starts_with/not_starts_with/ends_with/not_ends_with/string_contains, the policy value should be a single value too!
     // 3. in/not_in, the policy value should be an array
-    // 4. contains/not_contains, the object value should be an array
+    // 4. contains/not_contains, the object value should be an array, the policy value should be a single value
 
     switch ($op) {
         case Operator::ANY:
@@ -54,13 +55,14 @@ function eval_binary_operator(string $op, string $field, $policy_value, ObjectSe
             // NOTE: starts_with and ends_with should be a single value!!!!!
         case Operator::STARTS_WITH:
         case Operator::ENDS_WITH:
+        case Operator::STRING_CONTAINS:
             if (is_array($policy_value)) {
                 throw new Exception("wrong policy values! should not be an array");
             }
 
             return evalPositive($op, $object_value, $policy_value);
-        // policy value is an array
         case Operator::IN:
+            // NOTE: policy value is an array
             if (!is_array($policy_value)) {
                 throw new Exception("the policy value of operator `in` should be an array");
             }
@@ -71,8 +73,10 @@ function eval_binary_operator(string $op, string $field, $policy_value, ObjectSe
             if (!is_array($object_value)) {
                 throw new Exception("the object attribute should be array of operator `contains`");
             }
+            if (is_array($policy_value)) {
+                throw new Exception("wrong policy values! should not be an array");
+            }
             return evalPositive($op, $object_value, $policy_value);
-
         case Operator::NOT_EQ:
             // NOTE: not_starts_with and not_ends_with should be a single value!!!!!
         case Operator::NOT_STARTS_WITH:
@@ -81,8 +85,8 @@ function eval_binary_operator(string $op, string $field, $policy_value, ObjectSe
                 throw new Exception("wrong policy values! should not be an array");
             }
             return evalNegative($op, $object_value, $policy_value);
-        // policy value is an array
         case Operator::NOT_IN:
+            // NOTE: policy value is an array
             if (!is_array($policy_value)) {
                 throw new Exception("the policy value of operator `not_in` should be an array");
             }
@@ -91,6 +95,9 @@ function eval_binary_operator(string $op, string $field, $policy_value, ObjectSe
             // NOTE: objectValue is an array, policyValue is single value
             if (!is_array($object_value)) {
                 throw new Exception("the object attribute should be array of operator `contains`");
+            }
+            if (is_array($policy_value)) {
+                throw new Exception("wrong policy values! should not be an array");
             }
             return evalNegative($op, $object_value, $policy_value);
         default:
@@ -113,6 +120,7 @@ const OP_COMPARE_FUNCTIONS = [
     Operator::NOT_IN =>"IAM\Evaluation\cmp_not_in",
     Operator::CONTAINS => "IAM\Evaluation\cmp_contains",
     Operator::NOT_CONTAINS => "IAM\Evaluation\cmp_not_contains",
+    Operator::STRING_CONTAINS => "IAM\Evaluation\cmp_string_contains",
 ];
 
 
@@ -132,17 +140,6 @@ function evalPositive(string $op, $object_value, $policy_value): bool
 
     // contains object_value is array, policy is a single value or an array;
     if ($op == Operator::CONTAINS) {
-        if (is_array($policy_value)) {
-            foreach ($policy_value as $pv) {
-                // got one contains, return true;
-                if ($cmp_func($object_value, $pv)) {
-                    return true;
-                }
-            }
-            // all not contains, return false;
-            return false;
-        }
-
         return $cmp_func($object_value, $policy_value);
     }
 
@@ -174,17 +171,6 @@ function evalNegative(string $op, $object_value, $policy_value): bool
 
     // contains object_value is array, policy is a single value or an array;
     if ($op == Operator::NOT_CONTAINS) {
-        if (is_array($policy_value)) {
-            foreach ($policy_value as $pv) {
-                // got one contains, return false;
-                if (!$cmp_func($object_value, $pv)) {
-                    return false;
-                }
-            }
-            // all not contains, return true;
-            return true;
-        }
-
         return $cmp_func($object_value, $policy_value);
     }
 

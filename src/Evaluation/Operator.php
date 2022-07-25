@@ -39,6 +39,8 @@ class Operator
     const ENDS_WITH = "ends_with";
     const NOT_ENDS_WITH = "not_ends_with";
 
+    const STRING_CONTAINS = "string_contains";
+
     const LT = "lt";
     const LTE = "lte";
     const GT = "gt";
