@@ -56,9 +56,10 @@ function cmp_starts_with($v1, $v2): bool
 function cmp_not_starts_with($v1, $v2): bool
 {
     if (is_null($v1)) {
-        return false;
+        return true;
     }
-    return !(strpos($v1, $v2) === 0);
+
+    return strpos($v1, $v2) !== 0;
 }
 
 function cmp_ends_with($v1, $v2): bool
@@ -75,7 +76,7 @@ function cmp_ends_with($v1, $v2): bool
 function cmp_not_ends_with($v1, $v2): bool
 {
     if (is_null($v1)) {
-        return false;
+        return true;
     }
     $length = strlen($v2);
     return $length > 0 ? substr($v1, -$length) !== $v2: true;

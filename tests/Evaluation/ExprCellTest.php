@@ -243,6 +243,85 @@ final class ExprEvalTest extends TestCase
         $this->assertFalse($expr->eval($obj1));
     }
 
+    public function testEndsWith(): void
+    {
+        $policy = [
+            'op' => 'ends_with',
+            'field' => 'obj._bk_iam_path_',
+            'value' => '/set,2/',
+        ];
+
+        $expr = $this->makeExpression($policy);
+
+        // hit, ok
+        $obj1 = $this->getObjectWithAttribute("1", [
+            '_bk_iam_path_' => ['/biz,1/set,2/'],
+        ]);
+        $this->assertTrue($expr->eval($obj1));
+
+        // not hit, false
+        $obj1 = $this->getObjectWithAttribute("1", [
+            '_bk_iam_path_' => ['/biz,1/set,3/'],
+        ]);
+        $this->assertFalse($expr->eval($obj1));
+
+        // empty array, false
+        $obj1 = $this->getObjectWithAttribute("1", [
+            '_bk_iam_path_' => [],
+        ]);
+        $this->assertFalse($expr->eval($obj1));
+
+        // empty string, false
+        $obj1 = $this->getObjectWithAttribute("1", [
+            '_bk_iam_path_' => '',
+        ]);
+        $this->assertFalse($expr->eval($obj1));
+
+        // has no that attribute, false
+        $obj1 = $this->getObjectWithAttribute("1", [
+        ]);
+        $this->assertFalse($expr->eval($obj1));
+    }
+
+    public function testNotEndsWith(): void
+    {
+        $policy = [
+            'op' => 'not_ends_with',
+            'field' => 'obj._bk_iam_path_',
+            'value' => '/set,2/',
+        ];
+
+        $expr = $this->makeExpression($policy);
+
+        // hit, ok
+        $obj1 = $this->getObjectWithAttribute("1", [
+            '_bk_iam_path_' => ['/biz,1/set,3/'],
+        ]);
+        $this->assertTrue($expr->eval($obj1));
+
+        // not hit, false
+        $obj1 = $this->getObjectWithAttribute("1", [
+            '_bk_iam_path_' => ['/biz,1/set,2/'],
+        ]);
+        $this->assertFalse($expr->eval($obj1));
+
+        // empty array, true
+        $obj1 = $this->getObjectWithAttribute("1", [
+            '_bk_iam_path_' => [],
+        ]);
+        $this->assertTrue($expr->eval($obj1));
+
+        // empty string, true
+        $obj1 = $this->getObjectWithAttribute("1", [
+            '_bk_iam_path_' => '',
+        ]);
+        $this->assertTrue($expr->eval($obj1));
+
+        // has no that attribute, false
+        $obj1 = $this->getObjectWithAttribute("1", [
+        ]);
+        $this->assertTrue($expr->eval($obj1));
+    }
 
     public function testOR(): void
     {
